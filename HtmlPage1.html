@@ -1,0 +1,350 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script>
+
+        // 輸入相關
+
+        function inputText(val) {
+            var ele = document.getElementById('input');
+            var ori = ele.innerHTML;
+            ele.innerHTML = ori + val;
+        }
+
+        function clearText() {
+            var ele = document.getElementById('input');
+            ele.innerHTML = '';
+        }
+
+        // 驗証相關︰
+
+        function verify(ori) {
+
+            // 不能以 ./* 開頭
+            if (startWithSymbol(ori)) {
+                //alert('1');
+                return false;
+            }
+
+            // 不能以 -+.*/ 結尾
+            if (endWithSymbol(ori)) {
+                //alert('2');
+                return false;
+            }
+
+            // 不可以再有連續的 /* 或 「多於兩個」連續的 + -
+            if (continuousSymbol(ori)) {
+                //alert('3');
+                return false;
+            }
+
+            // 一個數字不能多於2個小數點之類…
+            var num_arr = getPureNumAry(ori); // 取只是數字的串列
+            if (num_arr.length == 0 || !allNum(num_arr)) {
+                //alert('4');
+                return false;
+            }
+
+            return true;
+        }
+
+        function startWithSymbol(ori) {
+
+            var re = new RegExp('^[\.|\/|\*]|^([+|-]){2,}');
+            if (re.test(ori)) return true;
+            else return false;
+
+        }
+
+        function endWithSymbol(ori) {
+
+            var re = new RegExp('[\.|\/|\*|+|-]$');
+            if (re.test(ori)) return true;
+            else return false;
+
+        }
+
+        function continuousSymbol(ori) {
+
+            var re = new RegExp('([\*|\/|.]{2,})|([+|-]){3,}');
+            if (re.test(ori)) return true;
+            else return false;
+        }
+
+        function getPureNumAry(ori) {
+
+            var tmp = '';
+            var ary = [];
+
+            for (var i = 0; i < ori.length; i++) {
+
+                if (i == (ori.length - 1)) {
+                    tmp += ori[i];
+                    ary.push(tmp);
+                }
+                else if ((isNaN(ori[i]) && ori[i] != '.')) {
+                    ary.push(tmp);
+                    tmp = '';
+                }
+                else {
+                    tmp += ori[i];
+                }
+
+            }
+
+            return ary;
+
+        }
+
+        function allNum(num_arr) {
+
+            for (var i = 0; i < num_arr.length; i++)
+                if (isNaN(num_arr[i]))
+                    return false;
+
+            return true;
+        }
+
+        // 計算相關︰
+
+        function getNumAry(ori) { // 下方取帶正負的數字
+
+            var tmp = '';
+            var ary = [];
+            var attach_sym = false;
+
+            for (var i = 0; i < ori.length; i++) {
+
+                // 是否視符號為數字的一部份
+
+                if (i == 0 && isNaN(ori[i]))
+                    attach_sym = true;
+                else if ((ori.length > 2) && isNaN(ori[i - 1]) && isNaN(ori[i]))
+                    attach_sym = true;
+                else
+                    attach_sym = false;
+
+                if ( attach_sym || ori[i] == '.' ) { // 累加
+                    tmp += ori[i];
+                    continue;
+                }
+
+                //累加數字 或 推入 ary
+
+                if (i == (ori.length - 1)) // 最後一個字必推
+                {
+                    tmp += ori[i];
+                    ary.push(tmp);
+                }
+                else if (isNaN(ori[i]) && !attach_sym) // 不是累加符號的符號，就是正常+-*/ = 推
+                {
+                    ary.push(tmp);
+                    tmp = '';
+                }
+                else if (!isNaN(ori[i])) { // 數字則累加
+                    tmp += ori[i];
+                }
+
+            }
+
+            return ary;
+
+        }
+
+        function getSymAry(ori) { // 取單一或連續符號的前者
+
+            var ary = [];
+
+            for (var i = 0; i < ori.length; i++) {
+
+                if (i == 0)
+                    continue;
+                else if ((ori.length > 2) && (isNaN(ori[i - 1])) && (isNaN(ori[i])))
+                    continue;
+                else if (isNaN(ori[i]) && ori[i] != '.')
+                    ary.push(ori[i]);
+            }
+
+            return ary;
+        }
+
+        function times_div(sym_arr, num_arr) {
+
+            var ans = '';
+            var tmp_former = num_arr[0];
+
+            for (var i = 0; i < sym_arr.length; i++) {
+
+                if ((i == sym_arr.length - 1) && (sym_arr[i] != '*' && sym_arr[i] != '/')) {
+                    ans += tmp_former + sym_arr[i] + num_arr[i + 1];
+                }
+                else if ((i == sym_arr.length - 1) && (sym_arr[i] == '*')) {
+                    ans += times(parseFloat(tmp_former), parseFloat(num_arr[i + 1])) + '';
+                }
+                else if ((i == sym_arr.length - 1) && (sym_arr[i] == '/')) {
+                    ans += divide(parseFloat(tmp_former), parseFloat(num_arr[i + 1])) + '';
+                }
+
+                else if (sym_arr[i] != '*' && sym_arr[i] != '/') {
+                    ans += tmp_former + sym_arr[i];
+                    tmp_former = num_arr[i + 1];
+                }
+                else if (sym_arr[i] == '*') {
+                    tmp_former = times(parseFloat(tmp_former), parseFloat(num_arr[i + 1])) + '';
+                }
+                else if (sym_arr[i] == '/') {
+                    tmp_former = divide(parseFloat(tmp_former), parseFloat(num_arr[i + 1])) + '';
+                }
+            }
+
+            return ans;
+        }
+
+        function add_min(sym_arr, num_arr) {
+
+
+
+            var ans = num_arr[0];
+
+            for (var i = 0; i < sym_arr.length; i++) {
+
+                if (sym_arr[i] == '+') {
+                    ans = add(parseFloat(ans), parseFloat(num_arr[i + 1])) + '';
+                }
+                else if (sym_arr[i] == '-') {
+                    ans = mins(parseFloat(ans), parseFloat(num_arr[i + 1])) + '';
+                }
+
+            }
+
+            return ans;
+        }
+
+        function times(a, b) {
+            return parseFloat((a * b).toFixed(10));
+        }
+
+        function divide(a, b) {
+            return parseFloat((a / b).toFixed(10));
+        }
+
+        function add(a, b) {
+            return parseFloat((a + b).toFixed(10));
+            //return a + b;
+        }
+
+        function mins(a, b) {
+            return parseFloat((a - b).toFixed(10));
+            //return a - b;
+        }
+
+
+        // 主要的計算相關步驟︰
+
+        function calculate() {
+
+            var ele = document.getElementById('input');
+            var ori = ele.innerHTML;
+            var ans = '';
+
+            // 驗證
+            if (!verify(ori)) {
+                alert('輸入算式不正確 ! 請 Clear 再輸入');
+                return;
+            }
+
+            // 先乘除
+            var num_arr = getNumAry(ori);// 拆開數字﹑符號為不同串列
+            var sym_arr = getSymAry(ori);
+
+            if (sym_arr.length == 0 || num_arr.length == 0) 
+                ans = ori;
+            else
+                ans = times_div(sym_arr, num_arr);
+
+            // 後加減:
+            num_arr = getNumAry(ans); // 拆開數字﹑符號為不同串列
+            sym_arr = getSymAry(ans);
+
+            if (sym_arr.length == 0 || num_arr.length == 0) 
+                ans = ans;
+            else
+                ans = add_min(sym_arr, num_arr);
+
+            ele.innerHTML = ans;
+
+        }
+
+
+
+    </script>
+    <style>
+        table {
+            border: solid;
+            padding: 10px 10px 10px 10px;
+        }
+
+        td {
+            padding: 5px 5px 5px 5px;
+            text-align: center;
+            vertical-align: middle;
+            width: 50px;
+            height: 50px;
+        }
+
+        .screen {
+            border: solid;
+            border-width: 1px;
+        }
+
+        button {
+            background-color: gray;
+            font-size: large;
+            color: white;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <tbody>
+            <tr>
+                <td colspan="3" class="screen">
+                    <label id="input"></label>
+                </td>
+                <td>
+                    <button onclick="clearText();">C</button>
+                </td>
+                <td>
+                    <button onclick="calculate();">=</button>
+                </td>
+            </tr>
+            <tr>
+                <td><button onclick="inputText('1');">1</button></td>
+                <td><button onclick="inputText('2');">2</button></td>
+                <td><button onclick="inputText('3');">3</button></td>
+                <td><button onclick="inputText('+');">+</button></td>
+                <td><button onclick="inputText('-');">-</button></td>
+            </tr>
+            <tr>
+                <td><button onclick="inputText('4');">4</button></td>
+                <td><button onclick="inputText('5');">5</button></td>
+                <td><button onclick="inputText('6');">6</button></td>
+                <td><button onclick="inputText('*');">*</button></td>
+                <td><button onclick="inputText('/');">/</button></td>
+            </tr>
+            <tr>
+                <td><button onclick="inputText('7');">7</button></td>
+                <td><button onclick="inputText('8');">8</button></td>
+                <td><button onclick="inputText('9');">9</button></td>
+                <td><button onclick="inputText('0');">0</button></td>
+                <td><button onclick="inputText('.');">.</button></td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>
