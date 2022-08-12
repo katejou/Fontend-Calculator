@@ -1,7 +1,7 @@
-# interview_test2
+# Fontecd-Calculator
 A front-end calaulater made by HTML &amp; Javascript &amp; Css
 
-計算機的功能︰
+(這是一個我做過滿好玩的面試題目…所以留作紀念)︰
 
 1. 四則運算(先乘除後加減)
 
